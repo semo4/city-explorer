@@ -10,7 +10,7 @@ this app is about how to use api and get data from it.
 
 ## Getting Started
 <!-- What are the steps that a user must take in order to build this app on their own machine and get it running? -->
-1. install required package
+1. install required package(express, dotenv)
 2. test if library install 
 3. write port in .env
 4. write code in server.js 
