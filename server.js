@@ -19,12 +19,19 @@ const PORT = process.env.PORT;
 
 app.get('/location', handleLocation);
 
+
+
+
+
+app.get('/weather', handleWeather);
+
+
+
+
 function handleLocation(req, res){
     let searchQuery = req.query.city;
     let locationObject = grtLoocationData(searchQuery);
-    res.status(200).send(locationObject);
-
-    
+    res.status(200).send(locationObject); 
 }
 // handle data
 function grtLoocationData(searchQuery){
@@ -48,6 +55,47 @@ function CityLocation(searchQuery, displayName, lat, lon){
     this.latitude = lat;
     this.longitude = lon;
 }
+
+
+
+
+
+function handleWeather(req, res){
+    let searchQuery = req.query.city;
+    let weatherObject = grtWeatherData(searchQuery);
+    res.status(200).send(weatherObject); 
+}
+// handle data
+function grtWeatherData(searchQuery){
+    // get data array from json 
+    let weatherData = require('./data/weather.json'); 
+    // get value from array 
+    let weatherArray = [];
+    for(let i = 0 ; i <weatherData.data.length; i++ ){
+        let weatherDesc = weatherData.data[i].weather['description'];
+        let time = weatherData.data[i].datetime;
+        time = time.replace("-","/");
+        var date = new Date(time);
+        let dateStr = date.toString();
+        var newDate = dateStr.slice(" ",16);
+        
+        // return {'city':searchQuery,'weather':weatherDesc, 'time':date.toString()}
+        let responseObject = new CityWeather(weatherDesc, newDate);
+        weatherArray.push(responseObject);
+    }
+    return weatherArray;  
+}
+
+
+// constructors 
+
+function CityWeather(weatherDesc, time){
+    this.forecast = weatherDesc;
+    this.time = time;
+}
+
+
+
 
 app.listen(PORT, ()=>{
     console.log('the app is listening to '+ PORT);
