@@ -34,7 +34,7 @@ we will use location and weather api for certen city.
 - 02/21/2021 4:38pm - app work correctlly and fully functional heroku server run code in correct with two Get method from two different endpoint 
 - Ms. Hanaa Maratouq 
 
-
+# Lab 06
 =========================================================================================================
 ## Number and name of feature: #1 Repository Set Up
 
@@ -66,3 +66,51 @@ we will use location and weather api for certen city.
 ## Finish time: 3:30
 
 ## Actual time needed to complete: 01:00
+
+=========================================================================================================
+=========================================================================================================
+=========================================================================================================
+
+
+# Lab 07
+=========================================================================================================
+## Number and name of feature: #1 Data Formatting
+
+## Estimate of time needed to complete: 00:30
+
+## Start time: 1:00
+
+## Finish time: 1:30
+
+## Actual time needed to complete: 00:30
+
+=========================================================================================================
+## Number and name of feature: #2 Locations
+
+## Estimate of time needed to complete: 01:00
+
+## Start time: 1:30
+
+## Finish time: 2:30
+
+## Actual time needed to complete: 01:00
+=========================================================================================================
+## Number and name of feature: #3 Weather
+
+## Estimate of time needed to complete: 01:30
+
+## Start time: 2:30
+
+## Finish time: 04:00
+
+## Actual time needed to complete: 01:00
+=========================================================================================================
+## Number and name of feature: #3 parks
+
+## Estimate of time needed to complete: 03:30
+
+## Start time: 5:30
+
+## Finish time: 9:00
+
+## Actual time needed to complete: 03:30
