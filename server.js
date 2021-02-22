@@ -17,21 +17,26 @@ const PORT = process.env.PORT;
 
 // route - end point 
 
+
+
 app.get('/location', handleLocation);
-
-
-
-
 
 app.get('/weather', handleWeather);
 
+app.get('*', handleError);
 
-
+function handleError(req, res){
+    res.status(404).send({ status: 500, responseText: "Sorry, something went wrong"}); 
+}
 
 function handleLocation(req, res){
-    let searchQuery = req.query.city;
-    let locationObject = grtLoocationData(searchQuery);
-    res.status(200).send(locationObject); 
+    try{
+        let searchQuery = req.query.city;
+        let locationObject = grtLoocationData(searchQuery);
+        res.status(200).send(locationObject); 
+    }catch(error){
+        res.status(500).send('Sorry, something went wron' + error);
+    } 
 }
 // handle data
 function grtLoocationData(searchQuery){
@@ -61,9 +66,14 @@ function CityLocation(searchQuery, displayName, lat, lon){
 
 
 function handleWeather(req, res){
-    let searchQuery = req.query.city;
-    let weatherObject = grtWeatherData(searchQuery);
-    res.status(200).send(weatherObject); 
+    try{
+        let searchQuery = req.query.city;
+        let weatherObject = grtWeatherData(searchQuery);
+        res.status(200).send(weatherObject); 
+    }catch(error){
+        res.status(500).send('Sorry, something went wron' + error);
+    } 
+   
 }
 // handle data
 function grtWeatherData(searchQuery){
