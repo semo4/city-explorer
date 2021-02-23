@@ -16,6 +16,11 @@ const superagent = require('superagent');
 
 app.use(cors());
 
+let pg = require('pg');
+
+// const client = new pg.Client( process.env.DATABASE_URL);
+const client = new pg.Client({ connectionString: process.env.DATABASE_URL,   ssl: { rejectUnauthorized: false } });
+
 // gor var from .env
 const PORT = process.env.PORT;
 
@@ -61,35 +66,62 @@ function handleparks(req, res) {
 }
 
 
+function checkExist(searchQuery, res) {
 
+    let sqlQuery = "SELECT * FROM citylocation WHERE c_name = ($1) ";
+    let value = [searchQuery];
+    client.query(sqlQuery, value).then(data => {
+        // console.log('data returned back from db in check function ', data.rows[0].c_name);
+        
+        if (data.rows.length === 0){
+            const query = {
+                key: process.env.GEOCODE_API_KEY,
+                q: searchQuery,
+                limit: 1,
+                format: 'json'
+            }
+            
+    
+            let url = `https://us1.locationiq.com/v1/search.php`;
+            superagent.get(url).query(query).then(data => {
+                // console.log(data.body[0].lat);
+                try {
+                    let longitude = data.body[0].lon;
+                    let latitude = data.body[0].lat;
+                    let displayName = data.body[0].display_name;
+                    let sqlQuery = `insert into citylocation(c_name,display_name, lat, lon) values ($1,$2,$3,$4)returning *`;
+                    let value = [searchQuery,displayName,latitude,longitude]; 
+                    client.query(sqlQuery,value).then(data =>{
+                        console.log('data returned back from db ' ,data);
+                    });
+                    let responseObject = new CityLocation(searchQuery, displayName, latitude, longitude);
+                    res.status(200).send(responseObject);
+                } catch (error) {
+                    res.status(500).send(error);
+                }
+    
+            }).catch(error => {
+                res.status(500).send("Cannot connect with the api " + error);
+    
+            });
+        }
+        else{
+            let responseObject = new CityLocation(data.rows[0].c_name, data.rows[0].display_name, data.rows[0].lat, data.rows[0].lon);
+            res.status(200).send(responseObject);
+        }
+        
+    }).catch(error => {
+        console.log('canoot data returned back from db in check function ', error);
+    });
+}
 
 
 
 function grtLoocationData(searchQuery, res) {
-    const query = {
-        key: process.env.GEOCODE_API_KEY,
-        q: searchQuery,
-        limit: 1,
-        format: 'json'
-    }
 
-    let url = `https://us1.locationiq.com/v1/search.php`;
-    superagent.get(url).query(query).then(data => {
-        // console.log(data.body[0].lat);
-        try {
-            let longitude = data.body[0].lon;
-            let latitude = data.body[0].lat;
-            let displayName = data.body[0].display_name;
-            let responseObject = new CityLocation(searchQuery, displayName, latitude, longitude);
-            res.status(200).send(responseObject);
-        } catch (error) {
-            res.status(500).send(error);
-        }
+    checkExist(searchQuery, res);
 
-    }).catch(error => {
-        res.status(500).send("Cannot connect with the api " + error);
-
-    });
+    
 }
 
 function grtWeatherData(searchQuery, longitude, latitude, res) {
@@ -197,9 +229,6 @@ function CityWeather(weatherDesc, time) {
     this.time = time;
 }
 
-
-
-
 // function getParksData(searchQuery, res) {
 //     let query = {
 //       q: searchQuery,
@@ -227,16 +256,21 @@ function CityWeather(weatherDesc, time) {
 //     });
 //   } 
 
-
-function CityParks(name, address,fee, description, url) {
+function CityParks(name, address, fee, description, url) {
     this.name = name;
     this.address = address;
-     this.fee = fee;
+    this.fee = fee;
     this.description = description;
     this.url = url;
 }
-app.listen(PORT, () => {
-    console.log('the app is listening to ' + PORT);
+
+client.connect().then(data => {
+    app.listen(PORT, () => {
+        console.log('the app is listening to ' + PORT);
+    });
+}).catch(error => {
+    console.log('error in connect to database ' + error);
 });
+
 
 
