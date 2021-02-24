@@ -272,7 +272,7 @@ function getMoviesData(searchQuery, res){
 
 var page = 1;
 function getYelpData(searchQuery, res){
-    const pageNum = 5;
+    const pageNum = 20;
     const start = ((page - 1) * pageNum + 1)
     let key = process.env.YELP_API_KEY;
     let query = {
