@@ -29,7 +29,12 @@ const PORT = process.env.PORT;
 app.get('/location', handleLocation);
 app.get('/weather', handleWeather);
 app.get('/parks', handleparks);
-
+app.get('/movies', handleMovires);
+app.get('/yelp', handleYelp)
+app.get('/', handleError);
+function handleError(req, res) {
+    res.status(500).send({status : 500 , responseText:'Sorry, something went wrong'});
+}
 
 // handle 
 function handleLocation(req, res) {
@@ -65,9 +70,33 @@ function handleparks(req, res) {
     }
 }
 
+function handleMovires(req,res){
+    try {
+        let searchQuery = req.query.search_query;
+        getMoviesData(searchQuery, res);
 
-function checkExist(searchQuery, res) {
+    } catch (error) {
+        res.status(500).send('Sorry, something went wron' + error);
+    }
+}
 
+
+function handleYelp(req, res){
+    try {
+        let searchQuery = req.query.search_query;
+        // let lat = req.query.latitude;
+        // let lon = req.query.longitude;
+        getYelpData(searchQuery,res);
+
+    } catch (error) {
+        res.status(500).send('Sorry, something went wron' + error);
+    }
+}
+
+
+
+function grtLoocationData(searchQuery, res) {
+  
     let sqlQuery = "SELECT * FROM citylocation WHERE c_name = ($1) ";
     let value = [searchQuery];
     client.query(sqlQuery, value).then(data => {
@@ -113,13 +142,6 @@ function checkExist(searchQuery, res) {
     }).catch(error => {
         console.log('canoot data returned back from db in check function ', error);
     });
-}
-
-
-
-function grtLoocationData(searchQuery, res) {
-
-    checkExist(searchQuery, res);
 
     
 }
@@ -210,7 +232,83 @@ function getParksData(searchQuery, res) {
     });
 }
 
+function getMoviesData(searchQuery, res){
+    const queryMovie ={
+        api_key: process.env.MOVIE_API_KEY,
+        query : searchQuery
+       
+    }
+    let url = `https://api.themoviedb.org/3/search/movie`;
+    superagent.get(url).query(queryMovie).then(data=>{
+        console.log(data.body.results.length);
+        let movieArray = [];
+        try{
+         
 
+            for(let i = 0 ; i< data.body.results.length;i++){
+                console.log(data.body.results[i]);
+                let title = data.body.results[i].title;
+                let overview = data.body.results[i].overview;
+                let average_votes = data.body.results[i].vote_average;
+                let total_votes = data.body.results[i].vote_count;
+                let image_url = 'https://image.tmdb.org/t/p/w500/'+data.body.results[i].poster_path;
+                let popularity = data.body.results[i].popularity;
+                let released_on = data.body.results[i].release_date;
+                let movie = new CityMovies(title,overview,average_votes,total_votes,image_url,popularity,released_on);
+                movieArray.push(movie);
+                
+            }
+            res.status(200).send(movieArray);
+        }catch(error){
+            res.status(500).send(error);
+        }
+      
+        
+    }).catch(error =>{
+        res.status(500).send(error);
+    })
+}
+
+
+var page = 1;
+function getYelpData(searchQuery, res){
+    const pageNum = 5;
+    const start = ((page - 1) * pageNum + 1)
+    let key = process.env.YELP_API_KEY;
+    let query = {
+        location:searchQuery,
+        limit:pageNum,
+        offset:start
+      };
+      page++;
+    let url = "https://api.yelp.com/v3/businesses/search";
+  superagent.get(url).query(query).set('Authorization', `Bearer ${key}`).then(data => {
+    try {
+        let yelpArray= [];
+        let obj =JSON.parse(data.text).businesses;
+        for(let i = 0 ; i< obj.length;i++){
+            console.log(obj);
+            let name = obj[i].name;
+            let image_url = obj[i].image_url;
+            let price = obj[i].price;
+            let rating = obj[i].rating;
+            let url = obj[i].url;
+           
+            let yelp = new CityYelp(name,image_url,price,rating,url);
+            yelpArray.push(yelp);
+            
+        }
+        res.status(200).send(yelpArray);
+    //   res.status(200).send(JSON.parse(data.text).businesses);
+
+    } catch (error) {
+      res.status(500).send("Sorry, something went wrong"+error);
+    }
+  }).catch((error) => {
+    res.status(500).send("Sorry, something went wrong from promise" + error);
+  });
+
+}
 
 
 
@@ -229,32 +327,7 @@ function CityWeather(weatherDesc, time) {
     this.time = time;
 }
 
-// function getParksData(searchQuery, res) {
-//     let query = {
-//       q: searchQuery,
-//       api_key: process.env.PARKS_API_KEY
-//     };
-//     let url = "https://developer.nps.gov/api/v1a/parks";
-//     superagent.get(url).query(query).then((data) => {
-//       try {
-//         let arrayOfObjects = [];
-//         data.body.data.forEach(value => {
-//           let name = value.fullName;
-//           let address = value.addresses[0].line1 + " " + value.addresses[0].city + " " + value.addresses[0].stateCode + " " + value.addresses[0].postalCode;
-//         //   let fee = value.entranceFees[0].cost;
-//           let description = value.description;
-//           let url = value.url;
-//           let responseObject = new CityParks(name, address,  description, url);
-//           arrayOfObjects.push(responseObject);
-//         });
-//         res.status(200).send(arrayOfObjects);
-//       } catch(error){
-//         res.status(500).send("Sorry, something went wrong");
-//       }
-//     }).catch((error) => {
-//       res.status(500).send("Sorry, something went wrong from promise" + error);
-//     });
-//   } 
+
 
 function CityParks(name, address, fee, description, url) {
     this.name = name;
@@ -263,6 +336,26 @@ function CityParks(name, address, fee, description, url) {
     this.description = description;
     this.url = url;
 }
+
+
+function CityMovies(title, overview, average_votes, total_votes, image_url, popularity, released_on){
+    this.title = title;
+    this.overview = overview;
+    this.average_votes = average_votes;
+    this.total_votes = total_votes;
+    this.image_url = image_url;
+    this.popularity = popularity;
+    this.released_on = released_on;
+}
+
+function CityYelp(name,image_url,price,rating,url){
+    this.name = name;
+    this.image_url =image_url ;
+    this.price =price ;
+    this.rating = rating;
+    this.url =url ;
+  }
+
 
 client.connect().then(data => {
     app.listen(PORT, () => {
